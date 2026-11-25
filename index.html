@@ -1,0 +1,145 @@
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>بافرونا - متجر ادوات حلاقة</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Tahoma,Arial}
+body{background:#f6f6f6}
+header{background:#111;color:#fff;padding:12px 15px;display:flex;gap:10px;flex-wrap:wrap;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100}
+.logo{font-size:24px;font-weight:900;color:#ffd700}
+#search{padding:8px 12px;border-radius:20px;border:none;width:170px;outline:none}
+#cat{padding:8px;border-radius:20px;border:none}
+#cartBtn{background:#ffd700;color:#111;border:none;padding:8px 16px;border-radius:20px;font-weight:800;cursor:pointer}
+.hero{background:linear-gradient(135deg,#111,#333);color:#fff;text-align:center;padding:30px 15px}
+.hero h1{color:#ffd700;font-size:26px}
+.hero p{opacity:.8;margin-top:5px}
+#grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:12px;padding:15px}
+.card{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.08)}
+.card img{width:100%;height:160px;object-fit:cover}
+.info{padding:10px}.info small{color:#888;font-size:11px}.info h4{font-size:14px;height:40px;overflow:hidden;margin:4px 0}
+.price{font-weight:900}.old{color:#999;text-decoration:line-through;font-size:12px;margin-left:5px}
+.card button{width:100%;margin-top:6px;background:#111;color:#ffd700;border:none;padding:7px;border-radius:8px;font-weight:700;cursor:pointer}
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:999}
+.modal-content{background:#fff;width:92%;max-width:500px;margin:5% auto;padding:18px;border-radius:14px;max-height:85vh;overflow:auto}
+.close{float:left;font-size:26px;cursor:pointer}
+.total{font-weight:900;font-size:18px;margin:12px 0;text-align:left}
+#checkout{background:#25D366;color:#fff;width:100%;padding:12px;border:none;border-radius:10px;font-weight:900;font-size:16px;cursor:pointer}
+#clear{background:#eee;width:100%;padding:8px;margin-top:8px;border:none;border-radius:10px;cursor:pointer}
+</style>
+</head>
+<body>
+<header>
+<div class="logo">✂️ بافرونا</div>
+<div style="display:flex;gap:8px">
+<input id="search" placeholder="دور على منتج...">
+<select id="cat"><option value="">كل الاقسام</option></select>
+<button id="cartBtn">🛒 <span id="count">0</span></button>
+</div>
+</header>
+<div class="hero"><h1>متجر بافرونا - 200 منتج احترافي</h1><p>ادوات حلاقة اصلية - شحن لكل مصر - دفع عند الاستلام</p></div>
+<main id="grid"></main>
+
+<div id="modal" class="modal">
+<div class="modal-content">
+<span class="close">×</span>
+<h2>سلة المشتريات</h2>
+<div id="items"></div>
+<div class="total">الاجمالي: <span id="total">0</span> جنيه</div>
+<input id="custName" placeholder="اسمك" style="width:100%;padding:10px;margin:5px 0;border-radius:8px;border:1px solid #ddd">
+<input id="custPhone" placeholder="رقم التليفون" style="width:100%;padding:10px;margin:5px 0;border-radius:8px;border:1px solid #ddd">
+<button id="checkout">اتمام الطلب واتساب + حفظ في الباك اند</button>
+<button id="clear">تفريغ السلة</button>
+</div>
+</div>
+
+<script>
+// 200 منتج بافرونا
+const categories=["مقصات","ماكينات حلاقة","أمواس","فرش","كريمات","أطقم","اكسسوارات"];
+const baseNames=["مقص احترافي 6.5 بوصة","ماكينة Wahl الاصلية","ماكينة Kemei 2600","موس حلاقة خشب","فرشاة حلاقة","كريم حلاقة بافرونا","مريلة حلاقة سوداء","مقص تخفيف","ماكينة تحديد زيرو","طقم امشاط احترافي"];
+const products=[];
+for(let i=1;i<=200;i++){
+  let c=categories[i%7];
+  let n=baseNames[i%10];
+  products.push({id:i,name:`${n} بافرونا ${i}`,category:c,price:50+(i*17)%1450,oldPrice:120+(i*17)%1700,image:`https://picsum.photos/seed/bavrona${i}/400/400`,desc:`${c} اصلي`});
+}
+
+const grid=document.getElementById('grid'), catSel=document.getElementById('cat'), search=document.getElementById('search');
+let cart=JSON.parse(localStorage.getItem('bavrona_cart')||'[]');
+
+[...new Set(products.map(p=>p.category))].forEach(c=>{let o=document.createElement('option');o.value=c;o.textContent=c;catSel.appendChild(o);});
+
+function render(list){
+  grid.innerHTML='';
+  list.forEach(p=>{
+    let d=document.createElement('div');d.className='card';
+    d.innerHTML=`<img src="${p.image}" loading="lazy"><div class="info"><small>${p.category}</small><h4>${p.name}</h4><div><span class="old">${p.oldPrice}ج</span><span class="price">${p.price}ج</span></div><button onclick="addCart(${p.id})">أضف للسلة</button></div>`;
+    grid.appendChild(d);
+  });
+}
+function addCart(id){
+  let pr=products.find(x=>x.id===id), ex=cart.find(x=>x.id===id);
+  if(ex)ex.qty++; else cart.push({...pr,qty:1});
+  save();
+}
+function save(){localStorage.setItem('bavrona_cart',JSON.stringify(cart));upd();}
+function upd(){
+  document.getElementById('count').textContent=cart.reduce((a,b)=>a+b.qty,0);
+  let items=document.getElementById('items');items.innerHTML='';let tot=0;
+  cart.forEach(i=>{
+    tot+=i.price*i.qty;
+    items.innerHTML+=`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #eee"><span>${i.name} x${i.qty}</span><span>${i.price*i.qty}ج <button onclick="del(${i.id})" style="color:red;border:none;background:none">X</button></span></div>`;
+  });
+  document.getElementById('total').textContent=tot;
+  // باك اند محلي
+  localStorage.setItem('bavrona_orders_backup',JSON.stringify(cart));
+}
+window.del=id=>{cart=cart.filter(x=>x.id!==id);save();}
+function filtr(){
+  let q=search.value.toLowerCase(), c=catSel.value;
+  render(products.filter(p=>(!q||p.name.toLowerCase().includes(q))&&(!c||p.category===c)));
+}
+search.addEventListener('input',filtr);catSel.addEventListener('change',filtr);
+document.getElementById('cartBtn').onclick=()=>{document.getElementById('modal').style.display='block';upd();}
+document.querySelector('.close').onclick=()=>document.getElementById('modal').style.display='none';
+window.onclick=e=>{if(e.target==document.getElementById('modal'))document.getElementById('modal').style.display='none';}
+document.getElementById('clear').onclick=()=>{cart=[];save();}
+document.getElementById('checkout').onclick=()=>{
+  if(!cart.length)return alert('السلة فاضية');
+  let name=document.getElementById('custName').value||'عميل';
+  let phone=document.getElementById('custPhone').value||'';
+  let total=document.getElementById('total').textContent;
+  // باك اند: حفظ الطلب
+  let orders=JSON.parse(localStorage.getItem('bavrona_all_orders')||'[]');
+  orders.push({id:Date.now(),date:new Date().toLocaleString('ar-EG'),customer:{name,phone},items:cart,total});
+  localStorage.setItem('bavrona_all_orders',JSON.stringify(orders));
+  
+  let msg=`طلب جديد بافرونا%0Aالعميل: ${name}%0Aالهاتف: ${phone}%0A%0A`;
+  cart.forEach(i=>msg+=`${i.name} x${i.qty} = ${i.price*i.qty}ج%0A`);
+  msg+=`%0Aالاجمالي: ${total}ج`;
+  window.open('https://wa.me/01554451059?text='+msg,'_blank');
+  cart=[];save();alert('تم حفظ الطلب في الباك اند بنجاح ✅');
+};
+render(products);upd();
+</script>
+<div>
+
+</div>
+</body>
+</html>
+
+
+
+
+</p>
+</body>
+</html>
